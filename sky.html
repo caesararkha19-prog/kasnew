@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Uang Kas Kelas</title>
+<style>
+body{
+  font-family: Arial;
+  background:#f2f2f2;
+  padding:20px;
+}
+.box{
+  max-width:500px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:10px;
+}
+input, select, button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+button{
+  background:#2ecc71;
+  border:none;
+  color:white;
+  font-size:16px;
+}
+.reset{
+  background:red;
+}
+h2{text-align:center;}
+.hidden{display:none;}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+  <h2>🔐 Login Bendahara</h2>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- APLIKASI -->
+<div class="box hidden" id="appBox">
+  <h2>💰 Uang Kas Kelas</h2>
+
+  <input id="ket" placeholder="Keterangan">
+  <input id="tgl" type="date">
+  <input id="jumlah" type="number" placeholder="Jumlah (Rp)">
+
+  <select id="jenis">
+    <option value="masuk">Uang Masuk</option>
+    <option value="keluar">Uang Keluar</option>
+  </select>
+
+  <button onclick="tambah()">💾 Simpan</button>
+
+  <h3 id="saldo">Saldo: Rp 0</h3>
+
+  <h3>📅 Rekap Bulanan</h3>
+  <select id="bulan" onchange="rekapBulanan()"></select>
+  <p id="rekap"></p>
+
+  <h3>📜 Riwayat</h3>
+  <ul id="list"></ul>
+
+  <!-- TOMBOL RESET -->
+  <button class="reset" onclick="resetKas()">🔁 Reset Uang Kas</button>
+</div>
+
+<script>
+// ================== KONFIGURASI ==================
+const LOGIN_USER = "tkic";
+const LOGIN_PASS = "tkic";
+const PASSWORD_RESET = "reset123"; // GANTI PASSWORD RESET DI SINI
+// =================================================
+
+let data = JSON.parse(localStorage.getItem("kas")) || [];
+
+// ================== LOGIN ==================
+function login(){
+  if(user.value===LOGIN_USER && pass.value===LOGIN_PASS){
+    loginBox.classList.add("hidden");
+    appBox.classList.remove("hidden");
+    tampil();
+    isiBulan();
+  }else{
+    alert("Login salah!");
+  }
+}
+
+// ================== TAMBAH DATA ==================
+function tambah(){
+  if(!ket.value || !jumlah.value || !tgl.value){
+    alert("Lengkapi data!");
+    return;
+  }
+  data.push({
+    ket: ket.value,
+    tgl: tgl.value,
+    jum: Number(jumlah.value),
+    jenis: jenis.value
+  });
+  localStorage.setItem("kas", JSON.stringify(data));
+  ket.value="";
+  jumlah.value="";
+  tampil();
+  isiBulan();
+  rekapBulanan();
+}
+
+// ================== TAMPILKAN ==================
+function tampil(){
+  let saldo=0;
+  list.innerHTML="";
+  data.forEach(d=>{
+    saldo += d.jenis==="masuk"? d.jum : -d.jum;
+    let li=document.createElement("li");
+    li.textContent=`${d.tgl} | ${d.ket} | ${d.jenis} Rp ${d.jum.toLocaleString("id-ID")}`;
+    list.appendChild(li);
+  });
+  document.getElementById("saldo").innerText=
+    "Saldo: Rp "+saldo.toLocaleString("id-ID");
+}
+
+// ================== BULAN ==================
+function isiBulan(){
+  let setBulan=[...new Set(data.map(d=>d.tgl.substring(0,7)))];
+  bulan.innerHTML="";
+  setBulan.forEach(b=>{
+    let o=document.createElement("option");
+    o.value=b;
+    o.textContent=b;
+    bulan.appendChild(o);
+  });
+}
+
+// ================== REKAP ==================
+function rekapBulanan(){
+  if(!bulan.value) return;
+  let masuk=0, keluar=0;
+  data.filter(d=>d.tgl.startsWith(bulan.value))
+      .forEach(d=>{
+        d.jenis==="masuk"? masuk+=d.jum : keluar+=d.jum;
+      });
+  rekap.innerHTML=
+    `Masuk: Rp ${masuk.toLocaleString("id-ID")}<br>
+     Keluar: Rp ${keluar.toLocaleString("id-ID")}<br>
+     Saldo: Rp ${(masuk-keluar).toLocaleString("id-ID")}`;
+}
+
+// ================== RESET KAS ==================
+function resetKas(){
+  const pass = prompt("Masukkan Password Reset:");
+  if(pass === PASSWORD_RESET){
+    if(confirm("Yakin ingin menghapus SEMUA data kas?")){
+      localStorage.removeItem("kas");
+      data=[];
+      alert("Data kas berhasil di-reset!");
+      location.reload();
+    }
+  }else{
+    alert("Password reset salah!");
+  }
+}
+</script>
+
+</body>
+</html>
