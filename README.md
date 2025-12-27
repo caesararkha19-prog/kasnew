@@ -1,0 +1,2 @@
+# kasnew
+buat uang kas
